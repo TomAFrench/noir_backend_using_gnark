@@ -10,8 +10,8 @@ use acvm::pwg::range::solve_range_opcode;
 use acvm::pwg::signature::ecdsa::secp256k1_prehashed;
 use acvm::pwg::witness_to_value;
 use acvm::{
-    FieldElement, Language, OpcodeResolutionError, PartialWitnessGenerator, ProofSystemCompiler,
-    SmartContract,
+    FieldElement, Language, OpcodeResolution, OpcodeResolutionError, PartialWitnessGenerator,
+    ProofSystemCompiler, SmartContract,
 };
 use std::collections::BTreeMap;
 
@@ -55,25 +55,6 @@ impl ProofSystemCompiler for Gnark {
         }
     }
 
-    fn prove_with_meta(
-        &self,
-        circuit: Circuit,
-        witness_values: std::collections::BTreeMap<Witness, FieldElement>,
-    ) -> Vec<u8> {
-        // TODO: modify gnark serializer to accept the BTreeMap
-        let values = get_values_from_witness_tree(circuit.num_vars(), witness_values);
-        gnark_backend::prove_with_meta(circuit, values).unwrap()
-    }
-
-    fn verify_from_cs(
-        &self,
-        proof: &[u8],
-        public_inputs: Vec<FieldElement>,
-        circuit: Circuit,
-    ) -> bool {
-        gnark_backend::verify_with_meta(circuit, proof, &public_inputs).unwrap()
-    }
-
     fn get_exact_circuit_size(&self, circuit: &Circuit) -> u32 {
         gnark_backend::get_exact_circuit_size(circuit).unwrap()
     }
@@ -108,9 +89,10 @@ impl ProofSystemCompiler for Gnark {
 
 impl PartialWitnessGenerator for Gnark {
     fn solve_black_box_function_call(
+        &self,
         initial_witness: &mut BTreeMap<Witness, FieldElement>,
         func_call: &BlackBoxFuncCall,
-    ) -> Result<(), OpcodeResolutionError> {
+    ) -> Result<OpcodeResolution, OpcodeResolutionError> {
         match func_call.name {
             BlackBoxFunc::AES => Err(OpcodeResolutionError::UnsupportedBlackBoxFunc(
                 func_call.name,
@@ -165,7 +147,9 @@ impl PartialWitnessGenerator for Gnark {
             BlackBoxFunc::Keccak256 => Err(OpcodeResolutionError::UnsupportedBlackBoxFunc(
                 func_call.name,
             )),
-        }
+        }?;
+
+        Ok(OpcodeResolution::Solved)
     }
 }
 
@@ -181,10 +165,6 @@ impl GadgetCaller {
 }
 
 impl SmartContract for Gnark {
-    fn eth_contract_from_cs(&self, _circuit: Circuit) -> String {
-        unimplemented!("gnark does not implement an ETH contract")
-    }
-
     fn eth_contract_from_vk(&self, _verification_key: &[u8]) -> String {
         unimplemented!("gnark does not implement an ETH contract")
     }

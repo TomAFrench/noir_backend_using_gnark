@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "acir"
-version = "0.5.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "104242ac56c936464e3ac9618e1f635151e83334d8d4138f9a39490ca11acaa9"
+checksum = "018148d69bf14422b1c1d62909a241af2a7f51fec064feb2b01de88fb02b11b8"
 dependencies = [
  "acir_field",
  "flate2",
@@ -16,31 +16,29 @@ dependencies = [
 
 [[package]]
 name = "acir_field"
-version = "0.5.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebd6cc7ebc948cde55bf10a8c4f3e1479e03f34e00ee8ab83e86891b693dd503"
+checksum = "4d40dac25cf6be6335dd86286caeac859afd0dc74a4a75c64eed041b0f00a278"
 dependencies = [
  "ark-bls12-381",
  "ark-bn254",
  "ark-ff",
- "ark-serialize",
- "blake2",
  "cfg-if",
  "hex",
  "num-bigint",
- "num-traits",
  "serde",
 ]
 
 [[package]]
 name = "acvm"
-version = "0.5.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6145438d6c89c208cae93e49b925b0e2ac1963048a8ee4e002ca0f0de87d789e"
+checksum = "e17b7bc8f2b2215075b8e080ba3a0b8b7d759f04bc44b27e5bb8d845f4c77f20"
 dependencies = [
  "acir",
  "acvm_stdlib",
  "blake2",
+ "crc32fast",
  "indexmap",
  "k256",
  "num-bigint",
@@ -51,9 +49,9 @@ dependencies = [
 
 [[package]]
 name = "acvm_stdlib"
-version = "0.5.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aaabcf52a534df7ed591451cf5ac2a765416fee4e38e0c523cc29da8c244aa7c"
+checksum = "33ce2d19a9d1e7ff1bf415ed909b43031e33ef6df21be70e470bb1817b3e6989"
 dependencies = [
  "acir",
 ]

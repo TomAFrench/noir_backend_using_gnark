@@ -12,34 +12,9 @@ use crate::gnark_backend_wrapper::num_constraints;
 use crate::Gnark;
 
 extern "C" {
-    fn VerifyWithMeta(rawr1cs: GoString, proof: GoString) -> c_uchar;
-    fn ProveWithMeta(rawr1cs: GoString) -> *const c_char;
     fn VerifyWithVK(rawr1cs: GoString, proof: GoString, verifying_key: GoString) -> c_uchar;
     fn ProveWithPK(rawr1cs: GoString, proving_key: GoString) -> *const c_char;
     fn Preprocess(circuit: GoString) -> KeyPair;
-}
-
-pub fn prove_with_meta(
-    circuit: acvm::Circuit,
-    values: Vec<acvm::FieldElement>,
-) -> Result<Vec<u8>, GnarkBackendError> {
-    let rawr1cs = RawR1CS::new(circuit, values)?;
-
-    // Serialize to json and then convert to GoString
-    let serialized_rawr1cs = serde_json::to_string(&rawr1cs)
-        .map_err(|e| GnarkBackendError::SerializeCircuitError(e.to_string()))?;
-    let c_str = CString::new(serialized_rawr1cs)
-        .map_err(|e| GnarkBackendError::SerializeCircuitError(e.to_string()))?;
-    let go_string_rawr1cs = GoString::try_from(&c_str)?;
-
-    let result: *const c_char = unsafe { ProveWithMeta(go_string_rawr1cs) };
-    let c_str = unsafe { CStr::from_ptr(result) };
-    let bytes = c_str
-        .to_str()
-        .map_err(|e| GnarkBackendError::DeserializeProofError(e.to_string()))?
-        .as_bytes();
-
-    Ok(bytes.to_vec())
 }
 
 pub fn prove_with_pk(
@@ -71,34 +46,6 @@ pub fn prove_with_pk(
         .map_err(|e| GnarkBackendError::DeserializeProofError(e.to_string()))?;
 
     Ok(decoded_proof)
-}
-
-pub fn verify_with_meta(
-    circuit: acvm::Circuit,
-    proof: &[u8],
-    public_inputs: &[acvm::FieldElement],
-) -> Result<bool, GnarkBackendError> {
-    let rawr1cs = RawR1CS::new(circuit, public_inputs.to_vec())?;
-
-    // Serialize to json and then convert to GoString
-    let rawr1cs_json = serde_json::to_string(&rawr1cs)
-        .map_err(|e| GnarkBackendError::SerializeCircuitError(e.to_string()))?;
-    let c_str = CString::new(rawr1cs_json)
-        .map_err(|e| GnarkBackendError::SerializeCircuitError(e.to_string()))?;
-    let go_string_rawr1cs = GoString::try_from(&c_str)?;
-
-    let serialized_proof = String::from_utf8(proof.to_vec())
-        .map_err(|e| GnarkBackendError::SerializeProofError(e.to_string()))?;
-    let c_str = CString::new(serialized_proof)
-        .map_err(|e| GnarkBackendError::SerializeProofError(e.to_string()))?;
-    let go_string_proof = GoString::try_from(&c_str)?;
-
-    let result = unsafe { VerifyWithMeta(go_string_rawr1cs, go_string_proof) };
-    match result {
-        0 => Ok(false),
-        1 => Ok(true),
-        _ => Err(GnarkBackendError::VerifyInvalidBoolError),
-    }
 }
 
 pub fn verify_with_vk(
